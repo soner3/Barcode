@@ -16,9 +16,15 @@ from PyQt5.QtWidgets import (
 )
 
 STYLE = """
-    * {
+    QPushButton {
         font-family: Arial, Helvetica, sans-serif;
         font-size: 18pt;
+        color: black;
+    }
+
+    QTextEdit{
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 14pt;
         color: black;
     }
 
