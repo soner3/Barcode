@@ -1,9 +1,9 @@
 import os
 import sys
-from spire.barcode import BarCodeGenerator
-from PyQt5.QtGui import QIcon
+import random
+from spire.barcode import BarcodeSettings, BarCodeType, BarCodeGenerator
+from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import Qt
-
 from PyQt5.QtWidgets import (
     QApplication,
     QWidget,
@@ -15,6 +15,7 @@ from PyQt5.QtWidgets import (
     QFileDialog,
 )
 
+# CSS Style Code für die Widgets
 STYLE = """
     QPushButton {
         font-family: Arial, Helvetica, sans-serif;
@@ -27,12 +28,18 @@ STYLE = """
         font-size: 14pt;
         color: black;
     }
+    
+    QLabel {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 18pt;
+        color: black;
+    }
 
 """
 
 
 # Erstellt den Barcode
-class BarcodeGenerator(QWidget):
+class Barcode(QWidget):
 
     def __init__(self):
 
@@ -41,7 +48,7 @@ class BarcodeGenerator(QWidget):
 
         # Fenster bearbeiten
         self.setWindowTitle("Barcode Generator")
-        self.setMinimumSize(1700, 1000)
+        self.setMinimumSize(1100, 900)
         self.setWindowIcon(QIcon("Barcode.jpg"))
 
         # Widgets
@@ -80,8 +87,8 @@ class BarcodeGenerator(QWidget):
         self.__text_area.setReadOnly(True)
         self.__save.setFixedHeight(100)
         self.__save.setCursor(Qt.PointingHandCursor)
-        self.__description.setFixedHeight(150)
-        self.__description.setFixedWidth(700)
+        self.__description.setFixedHeight(180)
+        self.__description.setFixedWidth(400)
         self.__description.setAlignment(Qt.AlignCenter)
         self.__description.setWordWrap(True)
         self.__delete.setFixedHeight(100)
@@ -90,24 +97,64 @@ class BarcodeGenerator(QWidget):
         self.__generate_barcode_button.setCursor(Qt.PointingHandCursor)
         self.setStyleSheet(STYLE)
 
+        # Barcode Komponenten und Format erstellen
+        self.__barcode_settings = BarcodeSettings()
+        self.__barcode_settings.Type = BarCodeType.EAN13
+        self.__barcode_settings.ImageWidth = 500.0
+        self.__barcode_settings.ImageHeight = 150.0
+        self.__barcode_image = None
+        self.__barcode_nummer = ""
+
+        # Barcode Speicher Pfad
+        self.__speicher_pfad = "BarcodeDirectory"
+
         # Fenster zeigen
         self.show()
 
     # Generieren des Barcodes
     def generate(self):
-        pass
-    
+        # Directory erstellen, wenn nicht existiert
+        if not os.path.exists(self.__speicher_pfad):
+            os.mkdir(self.__speicher_pfad)
+
+        # Barcodenummer erstellen
+        for i in range(13):
+            i = str(random.randint(0, 9))
+            self.__barcode_nummer += i
+
+        # Barcode erstellen und speichern
+        self.__barcode_settings.Data = self.__barcode_nummer
+        self.__barcode_generator = BarCodeGenerator(self.__barcode_settings)
+        self.__barcode_image = self.__barcode_generator.GenerateImage()
+        with open(f"BarcodeDirectory/{self.__barcode_nummer}.png", "wb") as f:
+            f.write(self.__barcode_image)
+
+        # Barcode Bild im Textfeld eingeben
+        html = f"BarcodeDirectory/{self.__barcode_nummer}.png"
+        self.__text_area.setHtml(
+            f'<div style="text-align: center;"><img src="{html}" /></div>'
+        )
+
     # Speichern des Barcodes
     def save(self):
-        pass
-    
+        if self.__text_area == "":
+            return
+        else:
+            options = QFileDialog.Options()
+            file_path, _ = QFileDialog.getSaveFileName(self, "Barcode speichern", f"BarcodeDirectory/{self.__barcode_nummer}.png", "PNG Files (*.png);;JPEG Files (*.jpg);;BMP Files (*.bmp);;GIF Files (*.gif)", options=options)
+            if file_path:
+                with open(f"{file_path}", "wb") as f:
+                    f.write(self.__barcode_image)
+
+
     # Barcode Löschen
     def delete_all(self):
-        pass
+        self.__text_area.clear()
 
 
+# Starten des Programms
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    qrCode = BarcodeGenerator()
+    qrCode = Barcode()
     qrCode.show()
     sys.exit(app.exec_())
