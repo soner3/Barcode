@@ -5,4 +5,4 @@ Barcode Generator and Reader
 Creates a Barcode that you can save
 
 ## Barcode Reader
-Contains Methodes that can read a Barcode and give you the information from it
+Contains the Methode that can read a Barcode and give you the information from it without the security number

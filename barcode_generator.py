@@ -14,6 +14,7 @@ from PyQt5.QtWidgets import (
     QTextEdit,
     QFileDialog,
 )
+from barcode_scanner import scan_barcode
 
 # CSS Style Code für die Widgets
 STYLE = """
@@ -52,13 +53,14 @@ class Barcode(QWidget):
         self.setWindowIcon(QIcon("Barcode.jpg"))
 
         # Widgets
-        self.__text_area = QTextEdit()
+        self.__text_area = QTextEdit("")
         self.__save = QPushButton("Speichern")
         self.__description = QLabel(
             "Barcode kann erstellt werden und wird anschließend im Textfeld angezeigt."
         )
         self.__generate_barcode_button = QPushButton("Generate Barcode")
         self.__delete = QPushButton("Alle Felder Löschen")
+        self.__scan_barcode = QPushButton("Barcode Scannen")
 
         # Layout
         self.__vbox_left = QVBoxLayout()
@@ -73,6 +75,7 @@ class Barcode(QWidget):
         self.__vbox_right.addWidget(self.__description)
         self.__vbox_right.addWidget(self.__generate_barcode_button)
         self.__vbox_right.addWidget(self.__delete)
+        self.__vbox_right.addWidget(self.__scan_barcode)
 
         # VBoxen zur HBox hinzufügen
         self.__hbox.addLayout(self.__vbox_left)
@@ -82,6 +85,7 @@ class Barcode(QWidget):
         self.__generate_barcode_button.clicked.connect(self.generate)
         self.__save.clicked.connect(self.save)
         self.__delete.clicked.connect(self.delete_all)
+        self.__scan_barcode.clicked.connect(self.scanner)
 
         # Style
         self.__text_area.setReadOnly(True)
@@ -93,6 +97,8 @@ class Barcode(QWidget):
         self.__description.setWordWrap(True)
         self.__delete.setFixedHeight(100)
         self.__delete.setCursor(Qt.PointingHandCursor)
+        self.__scan_barcode.setFixedHeight(100)
+        self.__scan_barcode.setCursor(Qt.PointingHandCursor)
         self.__generate_barcode_button.setFixedHeight(100)
         self.__generate_barcode_button.setCursor(Qt.PointingHandCursor)
         self.setStyleSheet(STYLE)
@@ -135,19 +141,37 @@ class Barcode(QWidget):
             f'<div style="text-align: center;"><img src="{html}" /></div>'
         )
 
+    # Barcode Scannen und im Textfeld ausgeben (Die Sicherheitsnummer wird NICHT ausgegeben)
+    def scanner(self):
+        options = QFileDialog.Options()
+        file_filter = "PNG files (*.png);;All files (*.*)"
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Open PNG file", "", file_filter, options=options
+        )
+        if file_path and file_path.endswith(".png"):
+            scanned_barcode = scan_barcode(file_path)
+            self.__text_area.setPlainText("Barcode Zahlen: " + scanned_barcode[0])
+        else:
+            self.__text_area.setPlainText("Das war kein Barcode")
+
     # Speichern des Barcodes
     def save(self):
-        if self.__text_area == "":
+        if self.__text_area.toPlainText().strip() == "":
             return
         else:
             options = QFileDialog.Options()
-            file_path, _ = QFileDialog.getSaveFileName(self, "Barcode speichern", f"BarcodeDirectory/{self.__barcode_nummer}.png", "PNG Files (*.png);;JPEG Files (*.jpg);;BMP Files (*.bmp);;GIF Files (*.gif)", options=options)
+            file_path, _ = QFileDialog.getSaveFileName(
+                self,
+                "Barcode speichern",
+                f"BarcodeDirectory/{self.__barcode_nummer}.png",
+                "PNG Files (*.png);;JPEG Files (*.jpg);;BMP Files (*.bmp);;GIF Files (*.gif)",
+                options=options,
+            )
             if file_path:
                 with open(f"{file_path}", "wb") as f:
                     f.write(self.__barcode_image)
 
-
-    # Barcode Löschen
+    # Felder Löschen
     def delete_all(self):
         self.__text_area.clear()
 
